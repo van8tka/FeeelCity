@@ -1,0 +1,2 @@
+alias: caferu
+pwd: qwerty1234
