@@ -1,6 +1,8 @@
 ﻿using Android.Runtime;
 using Android.Views;
 using Android.Webkit;
+using Xamarin.Essentials;
+using static Google.Android.Material.Tabs.TabLayout;
 
 namespace FeeelCity;
 
@@ -9,7 +11,7 @@ public class MainActivity : Activity
 {
     private LogCafe<MainActivity>? _log;
     private WebView? _webView;
-
+    private RuntimePermissionService _runtimeRequestPermissionService;   
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         try
@@ -19,6 +21,8 @@ public class MainActivity : Activity
             base.OnCreate(savedInstanceState);
             SetTheme(Resource.Style.CafeRuTheme);
             SetContentView(Resource.Layout.activity_main);
+            _runtimeRequestPermissionService = new RuntimePermissionService(this);
+            _runtimeRequestPermissionService.RequestPermissions();
             Init();
         }
         catch (Exception er)
@@ -34,7 +38,12 @@ public class MainActivity : Activity
         if (_webView == null)
             throw new ArgumentNullException(nameof(_webView));
         _webView.SetWebViewClient(new WebViewClientClass());
+        _webView.SetWebChromeClient(new WebChromeClientClass());
         _webView.Settings.JavaScriptEnabled = true;
+        _webView.Settings.SetAppCacheEnabled(true);
+        _webView.Settings.DatabaseEnabled = true;
+        _webView.Settings.DomStorageEnabled = true;
+
         _webView.LoadUrl(Constants.PointUrl);
     }
 
@@ -57,10 +66,18 @@ public class MainActivity : Activity
         }
     }
 
+    class WebChromeClientClass : WebChromeClient
+    {
+        public override void OnGeolocationPermissionsShowPrompt(string? origin, GeolocationPermissions.ICallback? callback)
+        {
+            callback?.Invoke(origin, true, false);
+        }
+    }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
     {
         Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        _runtimeRequestPermissionService.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }
